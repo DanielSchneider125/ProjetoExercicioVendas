@@ -1,0 +1,16 @@
+program ProjetoVendas;
+
+uses
+  Vcl.Forms,
+  FItens in 'FItens.pas' {FCarrinho},
+  CadastroProdutos in 'CadastroProdutos.pas' {FProdutos};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TFCarrinho, FCarrinho);
+  Application.CreateForm(TFProdutos, FProdutos);
+  Application.Run;
+end.

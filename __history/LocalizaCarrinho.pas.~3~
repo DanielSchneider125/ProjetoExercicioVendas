@@ -1,0 +1,48 @@
+unit LocalizaCarrinho;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.Grids, Vcl.DBGrids, Vcl.ExtCtrls;
+
+type
+  TFLocalizaCarrinho = class(TForm)
+    PnFundo: TPanel;
+    DBGrid: TDBGrid;
+    TbCarrinho: TFDTable;
+    IntegerField3: TIntegerField;
+    TbCarrinhoDespesas: TCurrencyField;
+    TbCarrinhoTotal: TCurrencyField;
+    DS: TDataSource;
+    procedure DBGridDblClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    ID: Integer;
+    DBConexao: TFDConnection;
+    procedure LocalizaCarrinho;
+  end;
+
+var
+  FLocalizaCarrinho: TFLocalizaCarrinho;
+
+implementation
+
+{$R *.dfm}
+
+procedure TFLocalizaCarrinho.DBGridDblClick(Sender: TObject);
+begin
+   ID := TbCarrinho.FieldByName('ID').AsInteger;
+   Close;
+end;
+
+procedure TFLocalizaCarrinho.LocalizaCarrinho;
+begin
+  TbCarrinho.Connection := DBConexao;
+  TbCarrinho.Open();
+end;
+
+end.

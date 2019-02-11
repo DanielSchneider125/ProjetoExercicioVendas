@@ -1,0 +1,44 @@
+unit CadastroProdutos;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
+  FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, Vcl.StdCtrls, Vcl.DBCtrls,
+  Vcl.Mask, Data.DB, FireDAC.Comp.DataSet, FireDAC.Comp.Client, Vcl.ExtCtrls;
+
+type
+  TFProdutos = class(TForm)
+    PnFundo: TPanel;
+    TBProdutos: TFDTable;
+    TBProdutosID: TIntegerField;
+    TBProdutosNome: TStringField;
+    TBProdutosDescricao: TStringField;
+    TBProdutosCusto: TCurrencyField;
+    TBProdutosMargem: TCurrencyField;
+    DSProdutos: TDataSource;
+    LbID: TLabel;
+    EdID: TDBEdit;
+    LbNome: TLabel;
+    EdNome: TDBEdit;
+    LbDescricao: TLabel;
+    LbCusto: TLabel;
+    EdCusto: TDBEdit;
+    LbMargem: TLabel;
+    EdMargem: TDBEdit;
+    MnDescricao: TDBMemo;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FProdutos: TFProdutos;
+
+implementation
+
+{$R *.dfm}
+
+end.
