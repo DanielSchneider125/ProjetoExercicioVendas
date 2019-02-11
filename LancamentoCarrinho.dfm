@@ -26,7 +26,7 @@ object FCarrinho: TFCarrinho
       Top = 1
       Width = 730
       Height = 372
-      ActivePage = Carrinho
+      ActivePage = TsProdutos
       Align = alClient
       TabOrder = 0
       object TsProdutos: TTabSheet
@@ -153,11 +153,9 @@ object FCarrinho: TFCarrinho
             TitleFont.Height = -11
             TitleFont.Name = 'Tahoma'
             TitleFont.Style = []
-            OnCellClick = GridProdutosCellClick
-            OnColEnter = GridCarrinhoColEnter
             OnColExit = GridCarrinhoColExit
             OnDrawColumnCell = GridCarrinhoDrawColumnCell
-            OnKeyPress = GridCarrinhoKeyPress
+            OnExit = GridCarrinhoExit
             Columns = <
               item
                 Expanded = False
@@ -246,7 +244,7 @@ object FCarrinho: TFCarrinho
               Width = 75
               Height = 25
               Caption = 'Salvar'
-              TabOrder = 0
+              TabOrder = 3
               OnClick = BtSalvarClick
             end
             object BtCarregar: TButton
@@ -255,7 +253,7 @@ object FCarrinho: TFCarrinho
               Width = 96
               Height = 25
               Caption = 'Carregar Carrinho'
-              TabOrder = 1
+              TabOrder = 2
               OnClick = BtCarregarClick
             end
             object BtLimpar: TButton
@@ -264,8 +262,17 @@ object FCarrinho: TFCarrinho
               Width = 75
               Height = 25
               Caption = 'Limpar'
-              TabOrder = 2
+              TabOrder = 1
               OnClick = BtLimparClick
+            end
+            object BtVoltar: TButton
+              Left = 16
+              Top = 6
+              Width = 113
+              Height = 25
+              Caption = 'Voltar aos Produtos'
+              TabOrder = 0
+              OnClick = BtVoltarClick
             end
           end
         end
@@ -372,26 +379,19 @@ object FCarrinho: TFCarrinho
   end
   object TbGridCarrinho: TFDMemTable
     Active = True
+    AfterScroll = TbGridCarrinhoAfterScroll
     FieldDefs = <
       item
         Name = 'ID'
-        Attributes = [faReadonly]
         DataType = ftInteger
       end
       item
         Name = 'Nome'
-        Attributes = [faReadonly]
         DataType = ftString
         Size = 50
       end
       item
-        Name = 'Quantidade'
-        DataType = ftCurrency
-        Precision = 19
-      end
-      item
         Name = 'Preco'
-        Attributes = [faReadonly]
         DataType = ftCurrency
         Precision = 19
       end
@@ -409,6 +409,10 @@ object FCarrinho: TFCarrinho
         Name = 'Total'
         DataType = ftCurrency
         Precision = 19
+      end
+      item
+        Name = 'Quantidade'
+        DataType = ftFloat
       end>
     IndexDefs = <>
     FetchOptions.AssignedValues = [evMode]
@@ -428,9 +432,6 @@ object FCarrinho: TFCarrinho
       FieldName = 'Nome'
       Size = 50
     end
-    object TbGridCarrinhoQuantidade: TCurrencyField
-      FieldName = 'Quantidade'
-    end
     object TbGridCarrinhoPreco: TCurrencyField
       FieldName = 'Preco'
     end
@@ -442,6 +443,9 @@ object FCarrinho: TFCarrinho
     end
     object TbGridCarrinhoTotal: TCurrencyField
       FieldName = 'Total'
+    end
+    object TbGridCarrinhoQuantidade: TFloatField
+      FieldName = 'Quantidade'
     end
   end
   object DSProdutosCarrinho: TDataSource

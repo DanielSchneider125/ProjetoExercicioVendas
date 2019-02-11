@@ -3,15 +3,14 @@ unit LancamentoCarrinho;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Data.SqlExpr, Vcl.StdCtrls,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Data.SqlExpr, Vcl.StdCtrls,
   Data.Win.ADODB, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error,
   FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool,
   FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait, FireDAC.Stan.Param,
-  FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Comp.DataSet,
-  FireDAC.Comp.Client, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef,
-  FireDAC.Stan.ExprFuncs, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.ExtCtrls;
+  FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+  FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs, Vcl.Grids,
+  Vcl.DBGrids, Vcl.ComCtrls, Vcl.ExtCtrls;
 
 type
   TFCarrinho = class(TForm)
@@ -38,7 +37,6 @@ type
     TbGridCarrinho: TFDMemTable;
     IntegerField1: TIntegerField;
     StringField1: TStringField;
-    TbGridCarrinhoQuantidade: TCurrencyField;
     TbGridCarrinhoPreco: TCurrencyField;
     DSProdutosCarrinho: TDataSource;
     PnProdutosBottom: TPanel;
@@ -74,25 +72,26 @@ type
     BtCarregar: TButton;
     BtLimpar: TButton;
     TbCarrinhoProdutosNome: TStringField;
+    BtVoltar: TButton;
+    TbGridCarrinhoQuantidade: TFloatField;
     procedure FormCreate(Sender: TObject);
-    procedure GridProdutosDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn;
-      State: TGridDrawState);
+    procedure GridProdutosDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure GridProdutosCellClick(Column: TColumn);
     procedure BtCarrinhoClick(Sender: TObject);
     procedure EdValorKeyPress(Sender: TObject; var Key: Char);
     procedure EdValorExit(Sender: TObject);
     procedure BtAddCarrinhoClick(Sender: TObject);
     procedure GridCarrinhoColExit(Sender: TObject);
-    procedure GridCarrinhoColEnter(Sender: TObject);
-    procedure GridCarrinhoKeyPress(Sender: TObject; var Key: Char);
-    procedure GridCarrinhoDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn;
-      State: TGridDrawState);
+    procedure GridCarrinhoDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure BtSalvarClick(Sender: TObject);
     procedure BtAddProdutoClick(Sender: TObject);
     procedure GridProdutosDblClick(Sender: TObject);
     procedure BtEditarProdutoClick(Sender: TObject);
     procedure BtCarregarClick(Sender: TObject);
     procedure BtLimparClick(Sender: TObject);
+    procedure BtVoltarClick(Sender: TObject);
+    procedure TbGridCarrinhoAfterScroll(DataSet: TDataSet);
+    procedure GridCarrinhoExit(Sender: TObject);
   private
     ID: Integer;
     procedure CalculaPrecoItens;
@@ -109,7 +108,8 @@ implementation
 
 {$R *.dfm}
 
-uses CadastroProdutos, LocalizaCarrinho;
+uses
+  CadastroProdutos, LocalizaCarrinho;
 
 procedure TFCarrinho.BtAddCarrinhoClick(Sender: TObject);
 var
@@ -129,6 +129,10 @@ begin
       TbGridCarrinho['Quantidade'] := 1;
       TbGridCarrinho['Preco'] := 0;
       TbGridCarrinho.Post;
+
+      TbGrid.Edit;
+      TbGrid.FieldByName('S').AsBoolean := False;
+      TbGrid.Post;
       Tem := True;
     end;
     TbGrid.Next;
@@ -162,8 +166,7 @@ var
   TelaLocalizaCarrinho: TFLocalizaCarrinho;
 begin
   if TbGridCarrinho.RecordCount > 0 then
-    if not(MessageDlg('Ao carregar um carrinho antigo os dados lançados serão perdidos. Deseja continuar?',
-      mtConfirmation, mbOKCancel, 0) = mrOk) then
+    if not (MessageDlg('Ao carregar um carrinho antigo os dados lançados serão perdidos. Deseja continuar?', mtConfirmation, mbOKCancel, 0) = mrOk) then
       Exit;
   Limpar;
   TelaLocalizaCarrinho := TFLocalizaCarrinho.Create(nil);
@@ -173,6 +176,8 @@ begin
     TelaLocalizaCarrinho.LocalizaCarrinho;
     if TelaLocalizaCarrinho.ShowModal = mrOk then
     begin
+      TbCarrinhoProdutos.Close;
+      TbCarrinhoProdutos.Open;
       ID := TelaLocalizaCarrinho.ID;
       TbCarrinhoProdutos.Filter := 'IdVenda = ' + IntToStr(ID);
       TbCarrinho.Filter := 'Id = ' + IntToStr(ID);
@@ -252,9 +257,7 @@ begin
         Query.Close;
         Query.SQL.Text := 'SELECT CASE WHEN MAX(ID) IS NULL THEN 1 ELSE (MAX(ID) +1) END ID FROM CARRINHOPRODUTOS';
         Query.Open();
-        TbCarrinhoProdutos.InsertRecord([Query.FieldByName('ID').AsInteger, TbGridCarrinho.FieldByName('ID').AsCurrency,
-          IDVenda, TbGridCarrinho.FieldByName('Quantidade').AsCurrency, TbGridCarrinho.FieldByName('Preco').AsCurrency,
-          TbGridCarrinho.FieldByName('Custo').AsCurrency, TbGridCarrinho.FieldByName('Margem').AsCurrency]);
+        TbCarrinhoProdutos.InsertRecord([Query.FieldByName('ID').AsInteger, TbGridCarrinho.FieldByName('ID').AsCurrency, IDVenda, TbGridCarrinho.FieldByName('Quantidade').AsCurrency, TbGridCarrinho.FieldByName('Preco').AsCurrency, TbGridCarrinho.FieldByName('Custo').AsCurrency, TbGridCarrinho.FieldByName('Margem').AsCurrency]);
         TbGridCarrinho.Next;
       end;
     finally
@@ -275,6 +278,7 @@ begin
       Query.SQL.Text := 'DELETE FROM CARRINHOPRODUTOS WHERE IDVENDA = :ID';
       Query.ParamByName('ID').AsInteger := ID;
       Query.ExecSQL;
+      FDConexao.Commit;
 
       TbGridCarrinho.First;
       while not TbGridCarrinho.Eof do
@@ -282,9 +286,7 @@ begin
         Query.Close;
         Query.SQL.Text := 'SELECT CASE WHEN MAX(ID) IS NULL THEN 1 ELSE (MAX(ID) +1) END ID FROM CARRINHOPRODUTOS';
         Query.Open();
-        TbCarrinhoProdutos.InsertRecord([Query.FieldByName('ID').AsInteger, TbGridCarrinho.FieldByName('ID').AsCurrency,
-          ID, TbGridCarrinho.FieldByName('Quantidade').AsCurrency, TbGridCarrinho.FieldByName('Preco').AsCurrency,
-          TbGridCarrinho.FieldByName('Custo').AsCurrency, TbGridCarrinho.FieldByName('Margem').AsCurrency]);
+        TbCarrinhoProdutos.InsertRecord([Query.FieldByName('ID').AsInteger, TbGridCarrinho.FieldByName('ID').AsCurrency, ID, TbGridCarrinho.FieldByName('Quantidade').AsCurrency, TbGridCarrinho.FieldByName('Preco').AsCurrency, TbGridCarrinho.FieldByName('Custo').AsCurrency, TbGridCarrinho.FieldByName('Margem').AsCurrency]);
         TbGridCarrinho.Next;
       end;
     finally
@@ -292,6 +294,11 @@ begin
     end;
   end;
   Limpar;
+end;
+
+procedure TFCarrinho.BtVoltarClick(Sender: TObject);
+begin
+  PgControl.TabIndex := 0;
 end;
 
 procedure TFCarrinho.BtLimparClick(Sender: TObject);
@@ -309,47 +316,70 @@ begin
   EdTotal.Text := '0,00';
 end;
 
+procedure TFCarrinho.TbGridCarrinhoAfterScroll(DataSet: TDataSet);
+begin
+  TbGridCarrinho.DisableControls;
+  if (GridCarrinho.selectedIndex = 2) then
+  begin
+    GridCarrinho.selectedIndex := 1;
+    GridCarrinho.SetFocus;
+    GridCarrinho.onColExit := nil;
+    GridCarrinho.SelectedIndex := 2;
+    GridCarrinho.SetFocus;
+    GridCarrinho.onColExit := GridCarrinhoColExit;
+  end;
+  TbGridCarrinho.EnableControls;
+end;
+
 procedure TFCarrinho.CalculaPrecoItens;
 var
   QtdeTotal, CustoTotal, Total: Currency;
   RateioDespesas: Double;
+  Mark: TBookmark;
 begin
   QtdeTotal := 0;
   Total := 0;
-  TbGridCarrinho.First;
-  while not TbGridCarrinho.Eof do
-  begin
-    QtdeTotal := QtdeTotal + TbGridCarrinho.FieldByName('Quantidade').AsCurrency;
-    TbGridCarrinho.Next;
+  Mark := TbGridCarrinho.GetBookMark;
+  TbGridCarrinho.DisableControls;
+  try
+
+    TbGridCarrinho.First;
+    while not TbGridCarrinho.Eof do
+    begin
+      QtdeTotal := QtdeTotal + TbGridCarrinho.FieldByName('Quantidade').AsCurrency;
+      TbGridCarrinho.Next;
+    end;
+
+    RateioDespesas := StrToCurr(EdValor.Text) / QtdeTotal;
+
+    TbGridCarrinho.First;
+    while not TbGridCarrinho.Eof do
+    begin
+      TbGridCarrinho.Edit;
+
+      CustoTotal := (TbGridCarrinho.FieldByName('Quantidade').AsCurrency * RateioDespesas) + (TbGridCarrinho.FieldByName('Quantidade').AsCurrency * TbGridCarrinho.FieldByName('Custo').AsCurrency);
+
+      TbGridCarrinho.FieldByName('Preco').AsCurrency := CustoTotal + (CustoTotal * TbGridCarrinho.FieldByName('Margem').AsCurrency / 100);
+
+      TbGridCarrinho.FieldByName('Total').AsCurrency := TbGridCarrinho.FieldByName('Quantidade').AsCurrency * TbGridCarrinho.FieldByName('Preco').AsCurrency;
+      TbGridCarrinho.Post;
+      TbGridCarrinho.Next;
+    end;
+
+    TbGridCarrinho.First;
+    while not TbGridCarrinho.Eof do
+    begin
+      Total := Total + TbGridCarrinho.FieldByName('Total').AsCurrency;
+      TbGridCarrinho.Next;
+    end;
+
+    EdTotal.Text := CurrToStr(Total);
+
+  finally
+    TbGridCarrinho.EnableControls;
+    TbGridCarrinho.GotoBookmark(Mark);
+    TbGridCarrinho.FreeBookmark(Mark)
   end;
-
-  RateioDespesas := StrToCurr(EdValor.Text) / QtdeTotal;
-
-  TbGridCarrinho.First;
-  while not TbGridCarrinho.Eof do
-  begin
-    TbGridCarrinho.Edit;
-
-    CustoTotal := (TbGridCarrinho.FieldByName('Quantidade').AsCurrency * RateioDespesas) +
-      (TbGridCarrinho.FieldByName('Quantidade').AsCurrency * TbGridCarrinho.FieldByName('Custo').AsCurrency);
-
-    TbGridCarrinho.FieldByName('Preco').AsCurrency := CustoTotal +
-      (CustoTotal * TbGridCarrinho.FieldByName('Margem').AsCurrency / 100);
-
-    TbGridCarrinho.FieldByName('Total').AsCurrency := TbGridCarrinho.FieldByName('Quantidade').AsCurrency *
-      TbGridCarrinho.FieldByName('Preco').AsCurrency;
-    TbGridCarrinho.Post;
-    TbGridCarrinho.Next;
-  end;
-
-  TbGridCarrinho.First;
-  while not TbGridCarrinho.Eof do
-  begin
-    Total := Total + TbGridCarrinho.FieldByName('Total').AsCurrency;
-    TbGridCarrinho.Next;
-  end;
-
-  EdTotal.Text := CurrToStr(Total);
 end;
 
 procedure TFCarrinho.CarregaProdutos;
@@ -375,20 +405,13 @@ begin
   TbGrid.First;
 end;
 
-procedure TFCarrinho.GridCarrinhoColEnter(Sender: TObject);
-begin
-  if GridCarrinho.SelectedField.FieldName = 'Quantidade' then
-    CalculaPrecoItens;
-end;
-
 procedure TFCarrinho.GridCarrinhoColExit(Sender: TObject);
 begin
   if GridCarrinho.SelectedField.FieldName = 'Quantidade' then
     CalculaPrecoItens;
 end;
 
-procedure TFCarrinho.GridCarrinhoDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn;
-  State: TGridDrawState);
+procedure TFCarrinho.GridCarrinhoDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
 begin
   if Column.FieldName <> 'Quantidade' then
   begin
@@ -397,10 +420,12 @@ begin
   end;
 end;
 
-procedure TFCarrinho.GridCarrinhoKeyPress(Sender: TObject; var Key: Char);
+procedure TFCarrinho.GridCarrinhoExit(Sender: TObject);
 begin
-  if GridCarrinho.SelectedField.FieldName = 'Quantidade' then
-    CalculaPrecoItens;
+  if GridCarrinho.SelectedIndex = 2 then
+  begin
+    GridCarrinho.selectedIndex := 1;
+  end;
 end;
 
 procedure TFCarrinho.GridProdutosCellClick(Column: TColumn);
@@ -414,9 +439,7 @@ begin
   if Column.FieldName = 'S' then
   begin
     GridProdutos.SelectedIndex := 1;
-    GridProdutos.SetFocus;
     GridProdutos.SelectedIndex := 0;
-    GridProdutos.SetFocus;
   end;
 end;
 
@@ -431,8 +454,7 @@ begin
   end;
 end;
 
-procedure TFCarrinho.GridProdutosDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn;
-  State: TGridDrawState);
+procedure TFCarrinho.GridProdutosDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
 var
   Check: Integer;
   R: TRect;
@@ -470,7 +492,7 @@ procedure TFCarrinho.EdValorKeyPress(Sender: TObject; var Key: Char);
 
   function Valida_Numero: Char;
   begin
-    if (not(Key in ['0' .. '9', Chr(8)])) and (Key <> '.') and (Key <> ',') then
+    if (not (Key in ['0'..'9', Chr(8)])) and (Key <> '.') and (Key <> ',') then
       Key := #0;
     Result := Key;
   end;
@@ -481,12 +503,12 @@ end;
 
 procedure TFCarrinho.FormCreate(Sender: TObject);
 var
-  DBName: String;
+  DBName: string;
 begin
   ID := 0;
   DBName := ExtractFilePath(Application.ExeName) + 'DBVendas.sqlite';
   // DeleteFile(DBName);
-  if not(FileExists(DBName)) then
+  if not (FileExists(DBName)) then
   begin
     FDConexao.Params.Values['database'] := DBName;
     FDConexao.Connected := True;
@@ -521,3 +543,4 @@ begin
 end;
 
 end.
+

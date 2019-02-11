@@ -20,7 +20,6 @@ object FProdutos: TFProdutos
     Height = 216
     Align = alClient
     TabOrder = 0
-    ExplicitHeight = 160
     object LbID: TLabel
       Left = 43
       Top = 16
@@ -46,18 +45,18 @@ object FProdutos: TFProdutos
     end
     object LbCusto: TLabel
       Left = 26
-      Top = 128
+      Top = 130
       Width = 28
       Height = 13
       Caption = 'Custo'
       FocusControl = EdCusto
     end
     object LbMargem: TLabel
-      Left = 536
-      Top = 128
-      Width = 38
+      Left = 514
+      Top = 130
+      Width = 60
       Height = 13
-      Caption = 'Margem'
+      Caption = 'Margem (%)'
       FocusControl = EdMargem
     end
     object EdID: TDBEdit
