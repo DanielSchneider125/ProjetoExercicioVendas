@@ -289,6 +289,7 @@ begin
         TbCarrinhoProdutos.InsertRecord([Query.FieldByName('ID').AsInteger, TbGridCarrinho.FieldByName('ID').AsCurrency, ID, TbGridCarrinho.FieldByName('Quantidade').AsCurrency, TbGridCarrinho.FieldByName('Preco').AsCurrency, TbGridCarrinho.FieldByName('Custo').AsCurrency, TbGridCarrinho.FieldByName('Margem').AsCurrency]);
         TbGridCarrinho.Next;
       end;
+      ID := 0;
     finally
       Query.Free;
     end;
